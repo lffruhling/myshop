@@ -44,7 +44,7 @@ class ProductGridItem extends StatelessWidget {
               icon: Icon(
                   product.isFavorite ? Icons.favorite : Icons.favorite_outline),
               onPressed: () {
-                product.toggleFavorite(auth.token).catchError((onError) {
+                product.toggleFavorite(auth.token, auth.userId).catchError((onError) {
                   scaffold.showSnackBar(
                     SnackBar(
                       content: Text(onError.toString()),

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop/exceptions/http_exception.dart';
 import 'package:shop/utils/constants.dart';
 
 class Product with ChangeNotifier{
@@ -12,8 +11,6 @@ class Product with ChangeNotifier{
   final double price;
   final String imageUrl;
   bool isFavorite;
-  final String _baseUrl =
-      '${Constants.BASE_API_URL}/products';
 
   Product({
     this.id,
@@ -29,16 +26,14 @@ class Product with ChangeNotifier{
     notifyListeners();
   }
 
-  Future<void> toggleFavorite(String token) async{
+  Future<void> toggleFavorite(String token, String userId) async{
     _toggleFavorite();
 
     try{
       /*Faz a chamada http*/
-      final response = await http.patch(
-        '${_baseUrl}/${id}.json?auth=$token',
-        body: json.encode({
-          'isFavorite': isFavorite,
-        }),
+      final response = await http.put(
+        '${Constants.BASE_API_URL}/userFavorites/$userId/$id.json?auth=$token',
+        body: json.encode(isFavorite),
       );
 
       /*Caso ocorra alguma falha ao remover o produto, adiciona ele novamente a lista*/

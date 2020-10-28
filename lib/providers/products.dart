@@ -9,10 +9,11 @@ import 'package:shop/utils/constants.dart';
 class Products with ChangeNotifier {
   final String _baseUrl = '${Constants.BASE_API_URL}/products';
 
+  String _userId;
   String _token;
   List<Product> _items = [];
 
-  Products(this._token, this._items);
+  Products([this._token, this._userId, this._items = const []]);
 
   List<Product> get items => [..._items];
 
@@ -26,6 +27,9 @@ class Products with ChangeNotifier {
 
   Future<void> loadProducts() async {
     final response = await http.get('${_baseUrl}.json?auth=$_token');
+    final favResponse = await http.get(
+        '${Constants.BASE_API_URL}/userFavorites/$_userId.json?auth=$_token');
+    final favMap = json.decode(favResponse.body);
 
     Map<String, dynamic> data = json.decode(response.body);
 
@@ -34,15 +38,21 @@ class Products with ChangeNotifier {
 
     if (data != null) {
       data.forEach((productId, productData) {
+        /*
+        * Se o favMap que é o retorno dos itens favoritos for nulo, é sinal de
+        * que ele está vazio e neste caso tudo será falso, porque não há um
+        * produtor favorido, caso não seja nulo ele buscara pelo ID do produto,
+        * se não encontrar o id atribui o valor padrão (através do operador default ??) como falso
+        * */
+        final isFavorite = favMap == null ? false : favMap[productId] ?? false;
         _items.add(
           Product(
-            id: productId,
-            title: productData['title'],
-            description: productData['description'],
-            price: productData['price'],
-            imageUrl: productData['imageUrl'],
-            isFavorite: productData['isFavorite'],
-          ),
+              id: productId,
+              title: productData['title'],
+              description: productData['description'],
+              price: productData['price'],
+              imageUrl: productData['imageUrl'],
+              isFavorite: isFavorite),
         );
       });
       notifyListeners();
@@ -70,7 +80,6 @@ class Products with ChangeNotifier {
         'description': newProduct.description,
         'price': newProduct.price,
         'imageUrl': newProduct.imageUrl,
-        'isFavorite': newProduct.isFavorite,
       }),
     );
 
@@ -161,7 +170,8 @@ class Products with ChangeNotifier {
       notifyListeners();
 
       /*Faz a chamada http*/
-      final response = await http.delete('${_baseUrl}/${product.id}.json?auth=$_token');
+      final response =
+          await http.delete('${_baseUrl}/${product.id}.json?auth=$_token');
 
       /*Caso ocorra alguma falha ao remover o produto, adiciona ele novamente a lista*/
       if (response.statusCode >= 400) {
