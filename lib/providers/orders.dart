@@ -5,10 +5,14 @@ import 'package:shop/providers/cart.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/providers/cart_item.dart';
 import 'package:shop/providers/order.dart';
+import 'package:shop/utils/constants.dart';
 
 class Orders with ChangeNotifier {
-  final String _baseUrl = 'https://flutter-myshop-6c9f1.firebaseio.com/orders';
+  final String _baseUrl = '${Constants.BASE_API_URL}/orders';
+  String _token;
   List<Order> _items = [];
+
+  Orders(this._token, this._items);
 
   List<Order> get items {
     return [..._items];
@@ -19,7 +23,7 @@ class Orders with ChangeNotifier {
   }
 
   Future<void> loadOrders() async {
-    final response = await http.get('${_baseUrl}.json');
+    final response = await http.get('${_baseUrl}.json?auth=$_token');
 
     Map<String, dynamic> data = json.decode(response.body);
     List<Order> loadedItems = [];
@@ -61,7 +65,7 @@ class Orders with ChangeNotifier {
     final date = DateTime.now();
 
     final response = await http.post(
-      "$_baseUrl.json",
+      "$_baseUrl.json?auth=$_token",
       body: json.encode({
         'total': cart.totalAmount,
         'date': date.toIso8601String(),

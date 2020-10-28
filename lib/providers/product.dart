@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop/Exceptions.dart';
+import 'package:shop/exceptions/http_exception.dart';
+import 'package:shop/utils/constants.dart';
 
 class Product with ChangeNotifier{
   final String id;
@@ -12,7 +13,7 @@ class Product with ChangeNotifier{
   final String imageUrl;
   bool isFavorite;
   final String _baseUrl =
-      'https://flutter-myshop-6c9f1.firebaseio.com/products';
+      '${Constants.BASE_API_URL}/products';
 
   Product({
     this.id,
@@ -28,13 +29,13 @@ class Product with ChangeNotifier{
     notifyListeners();
   }
 
-  Future<void> toggleFavorite() async{
+  Future<void> toggleFavorite(String token) async{
     _toggleFavorite();
 
     try{
       /*Faz a chamada http*/
       final response = await http.patch(
-        '${_baseUrl}/${id}.json',
+        '${_baseUrl}/${id}.json?auth=$token',
         body: json.encode({
           'isFavorite': isFavorite,
         }),

@@ -2,14 +2,17 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop/Exceptions.dart';
+import 'package:shop/exceptions/http_exception.dart';
 import 'package:shop/providers/product.dart';
+import 'package:shop/utils/constants.dart';
 
 class Products with ChangeNotifier {
-  final String _baseUrl =
-      'https://flutter-myshop-6c9f1.firebaseio.com/products';
+  final String _baseUrl = '${Constants.BASE_API_URL}/products';
 
+  String _token;
   List<Product> _items = [];
+
+  Products(this._token, this._items);
 
   List<Product> get items => [..._items];
 
@@ -22,7 +25,7 @@ class Products with ChangeNotifier {
   }
 
   Future<void> loadProducts() async {
-    final response = await http.get('${_baseUrl}.json');
+    final response = await http.get('${_baseUrl}.json?auth=$_token');
 
     Map<String, dynamic> data = json.decode(response.body);
 
@@ -61,7 +64,7 @@ class Products with ChangeNotifier {
     * */
 
     final response = await http.post(
-      '${_baseUrl}.json',
+      '${_baseUrl}.json?auth=$_token',
       body: json.encode({
         'title': newProduct.title,
         'description': newProduct.description,
@@ -128,7 +131,7 @@ class Products with ChangeNotifier {
       * dentro do array e notifica os ouvintes
       * */
       await http.patch(
-        '${_baseUrl}/${product.id}.json',
+        '${_baseUrl}/${product.id}.json?auth=$_token',
         body: json.encode({
           'title': product.title,
           'description': product.description,
@@ -141,7 +144,7 @@ class Products with ChangeNotifier {
     }
   }
 
-  Future<void> deleteProduct(String id) async{
+  Future<void> deleteProduct(String id) async {
     /*Retorna o indece do produtor encontrado*/
     final index = _items.indexWhere((prod) => prod.id == id);
 
@@ -158,16 +161,14 @@ class Products with ChangeNotifier {
       notifyListeners();
 
       /*Faz a chamada http*/
-      final response = await http.delete('${_baseUrl}/${product.id}.json');
+      final response = await http.delete('${_baseUrl}/${product.id}.json?auth=$_token');
 
       /*Caso ocorra alguma falha ao remover o produto, adiciona ele novamente a lista*/
-      if(response.statusCode >= 400){
+      if (response.statusCode >= 400) {
         _items.insert(index, product);
         notifyListeners();
         throw HttpException('Falha ao exlcuir item');
       }
-
-
     }
   }
 
