@@ -11,8 +11,24 @@ class OrderWidget extends StatefulWidget {
   _OrderWidgetState createState() => _OrderWidgetState();
 }
 
-class _OrderWidgetState extends State<OrderWidget> {
+class _OrderWidgetState extends State<OrderWidget> with SingleTickerProviderStateMixin {
   bool _expanded = false;
+  AnimationController _controller;
+  Animation<double> _rotateAnimation;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 100,
+      ),
+    );
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +45,7 @@ class _OrderWidgetState extends State<OrderWidget> {
               subtitle:
                   Text(DateFormat('dd/MM/yyyy hh:mm').format(widget.order.date)),
               trailing: IconButton(
-                icon: Icon(Icons.expand_more),
+                icon: Icon(_expanded ? Icons.expand_less:Icons.expand_more),
                 onPressed: () {
                   setState(() {
                     _expanded = !_expanded;
