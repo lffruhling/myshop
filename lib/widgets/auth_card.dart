@@ -11,11 +11,53 @@ class AuthCard extends StatefulWidget {
   _AuthCardState createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
   GlobalKey<FormState> _form = GlobalKey();
   bool _isLoading = false;
   AuthMode _authMode = AuthMode.Login;
   final _passwordController = TextEditingController();
+
+  AnimationController _controller;
+  Animation<double> _opacityAnimation;
+  Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 300,
+      ),
+    );
+
+    _opacityAnimation = Tween(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.linear,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, -1.5),
+      end: Offset(0, 0),
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.linear,
+    ));
+
+    /*
+    * Quando utilizado o AnimatedBuilder não é mais necessário adicionar
+    * um listener (ouvinte) para saber quando houve a alteração do estado
+    * da animação, esse controle passa a ser feito automaticamente.
+    * */
+    // _heightAnimation.addListener(() => setState(() {}));
+  }
+
   final Map<String, String> _authData = {
     'email': '',
     'password': '',
@@ -53,7 +95,6 @@ class _AuthCardState extends State<AuthCard> {
       if (_authMode == AuthMode.Login) {
         //Login
         await auth.login(_authData['email'], _authData['password']);
-
       } else {
         // Register
         await auth.signup(_authData['email'], _authData['password']);
@@ -69,25 +110,38 @@ class _AuthCardState extends State<AuthCard> {
     });
   }
 
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _controller.dispose();
+  }
+
   void _switchAuthMode() {
     if (_authMode == AuthMode.Login) {
       setState(() {
         _authMode = AuthMode.Signup;
       });
+      _controller.forward();
     } else {
       setState(() {
         _authMode = AuthMode.Login;
       });
+      _controller.reverse();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final deviceSize = MediaQuery.of(context).size;
-
     return Card(
       elevation: 8,
-      child: Container(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.ease,
         height: _authMode == AuthMode.Login ? 290 : 371,
         width: deviceSize.width * 0.75,
         padding: const EdgeInsets.all(16),
@@ -123,22 +177,35 @@ class _AuthCardState extends State<AuthCard> {
                 },
                 onSaved: (value) => _authData['password'] = value,
               ),
-              if (_authMode == AuthMode.Signup)
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Confirmar Senha'),
-                  keyboardType: TextInputType.text,
-                  obscureText: true,
-                  validator: _authMode == AuthMode.Signup
-                      ? (value) {
-                          if (value != _passwordController.text) {
-                            return 'Senhas são diferentes!';
-                          }
-
-                          /*Se estiver tudo ok ele retornar nullo*/
-                          return null;
-                        }
-                      : null,
+              AnimatedContainer(
+                constraints: BoxConstraints(
+                  minHeight: _authMode == AuthMode.Signup ? 60 : 0,
+                  maxHeight: _authMode == AuthMode.Signup ? 120 : 0,
                 ),
+                duration: Duration(milliseconds: 300),
+                curve: Curves.ease,
+                child: FadeTransition(
+                  opacity: _opacityAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: TextFormField(
+                      decoration: InputDecoration(labelText: 'Confirmar Senha'),
+                      keyboardType: TextInputType.text,
+                      obscureText: true,
+                      validator: _authMode == AuthMode.Signup
+                          ? (value) {
+                              if (value != _passwordController.text) {
+                                return 'Senhas são diferentes!';
+                              }
+
+                              /*Se estiver tudo ok ele retornar nullo*/
+                              return null;
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ),
               Spacer(),
               if (_isLoading)
                 CircularProgressIndicator()
