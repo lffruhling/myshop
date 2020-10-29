@@ -6,7 +6,6 @@ import 'package:shop/providers/product.dart';
 import 'package:shop/utils/app_routes.dart';
 
 class ProductGridItem extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     final scaffold = Scaffold.of(context);
@@ -15,7 +14,7 @@ class ProductGridItem extends StatelessWidget {
     * Recebe o produto via provider
     * Com o listen false, ele recebe os produtos mas não fica "escutando" as
     * alterações em tempo real. Para receber as alterações é necessário envolver
-    * o Iwdget com um Consumer; 
+    * o Iwdget com um Consumer;
     * */
 
     final Product product = Provider.of(context, listen: false);
@@ -32,9 +31,13 @@ class ProductGridItem extends StatelessWidget {
               arguments: product,
             );
           },
-          child: Image.network(
-            product.imageUrl,
-            fit: BoxFit.cover,
+          child: Hero(
+            tag: 'img_product_hero_${product.id}',
+            child: FadeInImage(
+              placeholder: AssetImage('assets/images/product-placeholder.png'),
+              image: NetworkImage(product.imageUrl),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         footer: GridTileBar(
@@ -44,7 +47,9 @@ class ProductGridItem extends StatelessWidget {
               icon: Icon(
                   product.isFavorite ? Icons.favorite : Icons.favorite_outline),
               onPressed: () {
-                product.toggleFavorite(auth.token, auth.userId).catchError((onError) {
+                product
+                    .toggleFavorite(auth.token, auth.userId)
+                    .catchError((onError) {
                   scaffold.showSnackBar(
                     SnackBar(
                       content: Text(onError.toString()),
@@ -71,7 +76,7 @@ class ProductGridItem extends StatelessWidget {
                 duration: Duration(seconds: 2),
                 action: SnackBarAction(
                   label: 'DESFAZER',
-                  onPressed: (){
+                  onPressed: () {
                     cart.removeSingleItem(product.id);
                   },
                 ),
